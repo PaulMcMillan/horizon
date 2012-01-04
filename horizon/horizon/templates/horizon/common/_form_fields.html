@@ -9,8 +9,7 @@
         <span class="help-inline">{{ error }}</span>
       {% endfor %}
     {% endif %}
-    <span class="help-block">{{ field.help_text }}</span>
-    <div class="input">
+    <div class="input" help_text="{{ field.help_text }}">
       {{ field }}
     </div>
   </div>

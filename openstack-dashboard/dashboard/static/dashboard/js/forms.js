@@ -52,4 +52,24 @@ horizon.addInitFunction(function() {
     var response = confirm('Are you sure you want to detach the ' + $(this).attr('title') + " ?");
     return response;
   });
+
+  // Add twipsy tooltips
+  function getTwipsyTitle(){
+      return $('div.input').has(this)[0].getAttribute('help_text')
+  };
+
+  $("div.input input,textarea,select").not('input:checkbox').twipsy({
+      placement:'right', 
+      trigger: 'focus',
+      offset: 4,
+      title: getTwipsyTitle,
+  });
+
+  // Special case for checkboxes, since hovering is equivalent to "focus"
+  $('div.input').has("input[type='checkbox']").twipsy({
+      placement: 'right',
+      trigger: 'hover',
+      offset: 4,
+      title: 'help_text',
+  });
 });

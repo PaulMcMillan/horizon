@@ -814,3 +814,8 @@ td.multi_select_column {
   float: left;
   width: 25px;
 }
+
+/* Fix twipsy z-index to show above modals. Bootstrap bug 582*/
+.twipsy {
+  z-index: 12000;
+}
