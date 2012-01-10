@@ -314,14 +314,15 @@ class DeleteAction(Action):
             #obj = table.get_object_by_id(int(obj_id))
             try:
                 self.delete_obj(request, obj_id)
-                deleted.append(obj)
-                LOG.info('Deleted %(obj_type)s: "%s"' % obj_id)
+                deleted.append(obj_id)
+                LOG.info('Deleted %s: "%s"' % (obj_type, obj_id))
             except Exception, e:
                 LOG.exception("Error deleting %s" % obj_type)
                 messages.error(request, _('Unable to delete %s: %s')
                                          % (obj_type, obj_id))
         if deleted:
             messages.success(request,
-                             _('Successfully deleted security groups: %s')
-                               % ", ".join([obj.name for obj in deleted]))
+                             _('Successfully deleted %s: %s')
+                               % (obj_type, 
+                                  ", ".join([obj.name for obj in deleted])))
         return shortcuts.redirect('horizon:nova:access_and_security:index')
