@@ -272,3 +272,56 @@ class FilterAction(BaseAction):
         """
         raise NotImplementedError("The filter method has not been implemented "
                                   "by %s." % self.__class__)
+
+
+class DeleteAction(Action):
+    """ A table action which deletes one or more objects.
+
+    .. attribute:: name
+
+        The short name or "slug" representing this action. Defaults to the
+        name of the ``Action`` class.
+
+    .. attribute:: verbose_name
+
+        A descriptive name used for display purposes. Defaults to the
+        value of ``name`` with the first letter of each word capitalized.
+
+    .. attribute:: verbose_name_plural
+
+        Used like ``verbose_name`` in cases where ``handles_multiple`` is
+        ``True``. Defaults to ``verbose_name`` with the letter "s" appended.
+    """
+    obj_type = _("Object")
+    name = "delete"
+    verbose_name = _("Delete")
+    classes = ('danger',)
+
+    def __init__(self, obj_type=None, obj_type_plural=None):
+        super(DeleteAction, self).__init__()
+        self.obj_type = obj_type or self.obj_type
+        self.obj_type_plural = obj_type_plural or "%ss" % self.obj_type
+        self.verbose_name_plural = ' '.join((self.verbose_name,
+                                             self.obj_type_plural))
+
+    def delete_obj(self, request, obj_id):
+        pass
+
+    def handle(self, table, request, object_ids):
+        tenant_id = request.user.tenant_id
+        deleted = []
+        for obj_id in object_ids:
+            #obj = table.get_object_by_id(int(obj_id))
+            try:
+                self.delete_obj(request, obj_id)
+                deleted.append(obj)
+                LOG.info('Deleted %(obj_type)s: "%s"' % obj_id)
+            except Exception, e:
+                LOG.exception("Error deleting %s" % obj_type)
+                messages.error(request, _('Unable to delete %s: %s')
+                                         % (obj_type, obj_id))
+        if deleted:
+            messages.success(request,
+                             _('Successfully deleted security groups: %s')
+                               % ", ".join([obj.name for obj in deleted]))
+        return shortcuts.redirect('horizon:nova:access_and_security:index')

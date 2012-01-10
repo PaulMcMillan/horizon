@@ -632,7 +632,7 @@ class DataTable(object):
         """
         Returns the data object from the table's dataset which matches
         the ``lookup`` parameter specified. An error will be raised if
-        a the match is not a single data object.
+        the match is not a single data object.
 
         Uses :meth:`~horizon.tables.DataTable.get_object_id` internally.
         """
