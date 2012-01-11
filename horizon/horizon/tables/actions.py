@@ -279,9 +279,12 @@ class DeleteAction(Action):
     """ A table action which deletes one or more objects.
     """
     obj_type = _("Object")
+    redirect_shortcut = None
+
     name = "delete"
     verbose_name = _("Delete")
     classes = ('danger',)
+
 
     def __init__(self, obj_type=None, obj_type_plural=None):
         super(DeleteAction, self).__init__()
@@ -291,8 +294,8 @@ class DeleteAction(Action):
                                              self.obj_type_plural))
 
     def delete_obj(self, request, obj_id):
-        raise NotImplementedError(
-            'delete_obj not defined for DeleteAction: ')
+        raise NotImplementedError('delete_obj() not defined for DeleteAction: '
+                                  '%s' % obj_type)
 
     def handle(self, table, request, object_ids):
         tenant_id = request.user.tenant_id
@@ -302,15 +305,15 @@ class DeleteAction(Action):
             obj_display = obj.get_object_display()
             try:
                 self.delete_obj(request, obj_id)
-                deleted.append(obj_id)
+                deleted.append(obj_display)
                 LOG.info('Deleted %s: "%s"' % (obj_type, obj_display))
             except Exception, e:
-                LOG.exception("Error deleting %s" % obj_type)
+                LOG.exception("Error deleting %s: %s" % 
+                              (obj_type, obj_display))
                 messages.error(request, _('Unable to delete %s: %s')
                                          % (obj_type, obj_display))
         if deleted:
             messages.success(request,
                              _('Successfully deleted %s: %s')
-                               % (obj_type, 
-                                  ", ".join([obj.name for obj in deleted])))
-        return shortcuts.redirect('horizon:nova:access_and_security:index')
+                             % (obj_type, ", ".join(deleted)))
+        return shortcuts.redirect(redirect_shortcut)
