@@ -308,7 +308,7 @@ class DeleteAction(Action):
                 deleted.append(obj_display)
                 LOG.info('Deleted %s: "%s"' % (obj_type, obj_display))
             except Exception, e:
-                LOG.exception("Error deleting %s: %s" % 
+                LOG.exception("Error deleting %s: %s" %
                               (obj_type, obj_display))
                 messages.error(request, _('Unable to delete %s: %s')
                                          % (obj_type, obj_display))
