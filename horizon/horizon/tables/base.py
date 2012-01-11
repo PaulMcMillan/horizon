@@ -756,6 +756,15 @@ class DataTable(object):
         """
         return datum.id
 
+
+    def get_object_display(self, datum):
+        """ Returns a display name that identifies this object.
+
+        By default, this returns a ``name`` attribute from the given object,
+        but this can be overriden to return other values.
+        """
+        return datam.name
+
     def get_columns(self):
         """ Returns this table's columns including auto-generated ones."""
         return self.columns.values()

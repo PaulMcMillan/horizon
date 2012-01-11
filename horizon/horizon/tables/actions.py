@@ -151,8 +151,8 @@ class Action(BaseAction):
             self.handles_multiple = True
 
         if not has_handler and (not has_single or has_multiple):
-            raise ValueError('You must define either a "handle" method '
-                             ' or a "single" or "multiple" method.')
+            raise NotImplementedError('You must define either a "handle" method'
+                                      ' or a "single" or "multiple" method.')
         if not has_single:
             def single(self, data_table, request, object_id):
                 return self.handle(data_table, request, [object_id])
@@ -276,21 +276,6 @@ class FilterAction(BaseAction):
 
 class DeleteAction(Action):
     """ A table action which deletes one or more objects.
-
-    .. attribute:: name
-
-        The short name or "slug" representing this action. Defaults to the
-        name of the ``Action`` class.
-
-    .. attribute:: verbose_name
-
-        A descriptive name used for display purposes. Defaults to the
-        value of ``name`` with the first letter of each word capitalized.
-
-    .. attribute:: verbose_name_plural
-
-        Used like ``verbose_name`` in cases where ``handles_multiple`` is
-        ``True``. Defaults to ``verbose_name`` with the letter "s" appended.
     """
     obj_type = _("Object")
     name = "delete"
@@ -305,21 +290,23 @@ class DeleteAction(Action):
                                              self.obj_type_plural))
 
     def delete_obj(self, request, obj_id):
-        pass
+        raise NotImplementedError(
+            'delete_obj not defined for DeleteAction: ')
 
     def handle(self, table, request, object_ids):
         tenant_id = request.user.tenant_id
         deleted = []
         for obj_id in object_ids:
-            #obj = table.get_object_by_id(int(obj_id))
+            obj = table.get_object_by_id(int(obj_id))
+            obj_display = obj.get_object_display()
             try:
                 self.delete_obj(request, obj_id)
                 deleted.append(obj_id)
-                LOG.info('Deleted %s: "%s"' % (obj_type, obj_id))
+                LOG.info('Deleted %s: "%s"' % (obj_type, obj_display))
             except Exception, e:
                 LOG.exception("Error deleting %s" % obj_type)
                 messages.error(request, _('Unable to delete %s: %s')
-                                         % (obj_type, obj_id))
+                                         % (obj_type, obj_display))
         if deleted:
             messages.success(request,
                              _('Successfully deleted %s: %s')
