@@ -153,6 +153,7 @@ class Action(BaseAction):
         if not has_handler and (not has_single or has_multiple):
             raise NotImplementedError('You must define either a "handle" method'
                                       ' or a "single" or "multiple" method.')
+
         if not has_single:
             def single(self, data_table, request, object_id):
                 return self.handle(data_table, request, [object_id])
@@ -198,11 +199,11 @@ class LinkAction(BaseAction):
                                             verbose_name))
         self.url = getattr(self, "url", url)
         if not self.verbose_name:
-            raise ValueError('A LinkAction object must have a '
-                             'verbose_name attribute.')
+            raise NotImplementedError('A LinkAction object must have a '
+                                      'verbose_name attribute.')
         if not self.url:
-            raise ValueError('A LinkAction object must have a '
-                             'url attribute.')
+            raise NotImplementedError('A LinkAction object must have a '
+                                      'url attribute.')
         if attrs:
             self.attrs.update(attrs)
 
