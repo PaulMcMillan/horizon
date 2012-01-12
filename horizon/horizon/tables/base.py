@@ -371,7 +371,6 @@ class Cell(object):
             union.add(self.get_status_class(self.status))
         return " ".join(union)
 
-
 class DataTableOptions(object):
     """ Contains options for :class:`.DataTable` objects.
 
@@ -763,7 +762,7 @@ class DataTable(object):
         By default, this returns a ``name`` attribute from the given object,
         but this can be overriden to return other values.
         """
-        return datam.name
+        return datum.name
 
     def get_columns(self):
         """ Returns this table's columns including auto-generated ones."""

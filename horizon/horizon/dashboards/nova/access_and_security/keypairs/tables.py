@@ -54,11 +54,11 @@ class DeleteKeyPairs(tables.Action):
 
 
 class DeleteKeyPairs(tables.DeleteAction):
-    obj_type = _("Keypair")
-    redirect_shortcut = 'horizon:nova:access_and_security:index'
+    data_type_display = _("Keypair")
 
-    def delete_obj(self, request, obj_id):
+    def delete(self, request, obj_id):
         api.nova.keypair_delete(request, obj_id)
+
 
 class ImportKeyPair(tables.LinkAction):
     name = "import"

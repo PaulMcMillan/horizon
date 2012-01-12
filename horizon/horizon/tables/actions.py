@@ -17,9 +17,10 @@
 import logging
 import new
 
+from django import shortcuts
 from django.forms.util import flatatt
+from django.contrib import messages
 from django.core import urlresolvers
-
 
 LOG = logging.getLogger(__name__)
 
@@ -278,42 +279,64 @@ class FilterAction(BaseAction):
 class DeleteAction(Action):
     """ A table action which deletes one or more objects.
     """
-    obj_type = _("Object")
-    redirect_shortcut = None
+    data_type_display = _("Object")
+    success_url = None
 
     name = "delete"
-    verbose_name = _("Delete")
+    default_verbose_base = _("Delete")
     classes = ('danger',)
 
 
-    def __init__(self, obj_type=None, obj_type_plural=None):
-        super(DeleteAction, self).__init__()
-        self.obj_type = obj_type or self.obj_type
-        self.obj_type_plural = obj_type_plural or "%ss" % self.obj_type
-        self.verbose_name_plural = ' '.join((self.verbose_name,
-                                             self.obj_type_plural))
+    def __init__(self):
+        self.data_type_display_plural = getattr(
+            self, 'data_type_display_plural',
+            self.data_type_display + 's')
 
-    def delete_obj(self, request, obj_id):
+        #results in something like "Delete Object"
+        self.verbose_name = getattr(
+            self, 'verbose_name',
+            ' '.join((self.default_verbose_base, 
+                      self.data_type_display)))
+
+        self.verbose_name_plural = getattr(
+            self, 'verbose_name_plural',
+            ' '.join((self.default_verbose_base, 
+                      self.data_type_display_plural)))
+
+        super(DeleteAction, self).__init__()
+
+    def delete(self, request, obj_id):
         raise NotImplementedError('delete_obj() not defined for DeleteAction: '
-                                  '%s' % obj_type)
+                                  '%s' % data_type_display)
+
+    def get_success_url(self, request=None):
+        if self.success_url:
+            return self.success_url
+        return request.build_absolute_uri()
 
     def handle(self, table, request, object_ids):
+        data_type_display = self.data_type_display
         tenant_id = request.user.tenant_id
         deleted = []
         for obj_id in object_ids:
-            obj = table.get_object_by_id(int(obj_id))
-            obj_display = obj.get_object_display()
+            obj = table.get_object_by_id(obj_id)
+            obj_display = table.get_object_display(obj)
             try:
-                self.delete_obj(request, obj_id)
+                self.delete(request, obj_id)
                 deleted.append(obj_display)
-                LOG.info('Deleted %s: "%s"' % (obj_type, obj_display))
+                LOG.info('Deleted %s: "%s"' % 
+                         (data_type_display, obj_display))
             except Exception, e:
                 LOG.exception("Error deleting %s: %s" %
-                              (obj_type, obj_display))
-                messages.error(request, _('Unable to delete %s: %s')
-                                         % (obj_type, obj_display))
+                              (data_type_display, e))
+                messages.error(request, _('Unable to delete %s: %s') %
+                                         (data_type_display, obj_display))
         if deleted:
+            if len(deleted) > 1:
+                data_type_pluralized = self.data_type_display_plural
+            else:
+                data_type_pluralized = data_type_display
             messages.success(request,
-                             _('Successfully deleted %s: %s')
-                             % (obj_type, ", ".join(deleted)))
-        return shortcuts.redirect(redirect_shortcut)
+                             _('Deleted %s: %s') %
+                             (data_type_pluralized, ", ".join(deleted)))
+        return shortcuts.redirect(self.get_success_url(request))
