@@ -283,16 +283,26 @@ class BatchAction(Action):
 
     .. attribute:: name
 
-       A verb for this action (Delete, Disable, etc.)
+       An internal name for this action.
 
-    .. attribute:: data_type_display
+    .. attribute:: action_present
 
-       A name for the type of data which is being deleted.
+       The display form of the name. Should be capitalized and
+       translated. ("Delete", "Disable", etc.)
 
-    .. attribute:: data_type_display_plural
+    .. attribute:: action_past
+
+       The past tense of action_present. ("Dleted", "Disabled", etc.)
+
+    .. attribute:: data_type_singular
+
+       A display name for the type of data that receives the
+       action. ("Keypair", "Floating IP", etc.)
+
+    .. attribute:: data_type_plural
 
        Optional plural word for the type of data being
-       displayed. Defaults to appending 's'.
+       acted on. Defaults to appending 's'.
 
     .. attribute:: success_url
 
@@ -303,9 +313,11 @@ class BatchAction(Action):
 
        Optional method that returns the success url.
 
-    .. method:: delete(self, request, datum_id)
+    .. method:: action(self, request, datum_id)
 
-       Required method that deletes the specified object.
+       Required method that accepts the specified object information
+       and performs the action. Return values are discarded, errors
+       raised are caught and logged.
     """
     #action_present = None
     #action_past = None
@@ -338,7 +350,7 @@ class BatchAction(Action):
 
     def action(self, request, datum_id):
         """ Override to take action on the specified datum. Return
-        value is discarded, errors raised are caught and logged.
+        values are ignored, errors raised are caught and logged.
         """
         raise NotImplementedError('action() must be defined for '
                                   'BatchAction: %s' % self.data_type_singular)
@@ -352,9 +364,15 @@ class BatchAction(Action):
         tenant_id = request.user.tenant_id
         action_success = []
         action_failure = []
+        action_not_allowed = []
         for datum_id in obj_ids:
             datum = table.get_object_by_id(datum_id)
             datum_display = table.get_object_display(datum)
+            if not table._filter_action(self, request, datum):
+                action_not_allowed.append(datum_display)
+                LOG.info('Permission denied to %s: "%s"' %
+                         (self._conjugate(past=True), datum_display))
+                continue
             try:
                 self.action(request, datum_id)
                 action_success.append(datum_display)
@@ -365,15 +383,20 @@ class BatchAction(Action):
                 LOG.exception("Unable to %s: %s" %
                               (self._conjugate(), e))
 
+        #Begin with success class, downgrade to info if problems
         success_message_level = messages.success
+        if action_not_allowed:
+            messages.error(request, _('You do not have permission to %s: %s') %
+                           (self._conjugate(action_not_allowed),
+                            ", ".join(action_not_allowed)))
+            success_message_level = messages.info
         if action_failure:
-            messages.error(request, 'Unable to %s: %s' % (
+            messages.error(request, _('Unable to %s: %s') % (
                     self._conjugate(action_failure),
                     ", ".join(action_failure)))
             success_message_level = messages.info
-
         if action_success:
-            success_message_level(request, '%s: %s' % (
+            success_message_level(request, _('%s: %s') % (
                     self._conjugate(action_success, True), 
                     ", ".join(action_success)))
 

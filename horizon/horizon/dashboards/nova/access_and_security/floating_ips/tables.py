@@ -50,39 +50,16 @@ class AllocateIP(tables.Action):
         return shortcuts.redirect('horizon:nova:access_and_security:index')
 
 
-class ReleaseIPs(tables.Action):
-    name = "release"
-    verbose_name = _("Release IP")
-    classes = ('danger',)
-
-    def handle(self, table, request, object_ids):
-        released = []
-        for obj_id in object_ids:
-            LOG.info('Releasing Floating IP "%s".' % obj_id)
-            try:
-                api.tenant_floating_ip_release(request, obj_id)
-                # Floating IP ids are returned from the API as integers
-                released.append(table.get_object_by_id(int(obj_id)))
-            except novaclient_exceptions.ClientException, e:
-                LOG.exception("ClientException in ReleaseFloatingIp")
-                messages.error(request, _('Unable to release Floating IP '
-                                          'from tenant.'))
-        if released:
-            messages.info(request,
-                          _('Successfully released floating IPs: %s.')
-                            % ", ".join([ip.ip for ip in released]))
-        return shortcuts.redirect('horizon:nova:access_and_security:index')
-
-
 class ReleaseIPs(tables.BatchAction):
     name = "release"
     action_present = _("Release")
     action_past = _("Released")
-    data_type_singular = _("IP")
-    data_type_plural = _("IPs")
+    data_type_singular = _("Floating IP")
+    data_type_plural = _("Floating IPs")
 
     def action(self, request, obj_id):
         api.tenant_floating_ip_release(request, obj_id)
+
 
 class AssociateIP(tables.LinkAction):
     name = "associate"

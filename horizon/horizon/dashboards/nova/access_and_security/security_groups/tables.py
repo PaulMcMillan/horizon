@@ -61,6 +61,18 @@ class DeleteGroup(tables.Action):
                                % ", ".join([group.name for group in deleted]))
         return shortcuts.redirect('horizon:nova:access_and_security:index')
 
+class DeleteGroup(tables.DeleteAction):
+    data_type_singular = _("Security Group")
+    data_type_plural = _("Security Groups")
+
+    def allowed(self, request, security_group=None):
+        if not security_group:
+            return True
+        return security_group.name != 'default'
+
+    def delete(self, request, obj_id):
+        api.security_group_delete(request, obj_id)
+
 
 class CreateGroup(tables.LinkAction):
     name = "create"
@@ -78,6 +90,9 @@ class EditRules(tables.LinkAction):
 class SecurityGroupsTable(tables.DataTable):
     name = tables.Column("name")
     description = tables.Column("description")
+
+    def sanitize_id(self, obj_id):
+        return int(obj_id)
 
     class Meta:
         name = "security_groups"
