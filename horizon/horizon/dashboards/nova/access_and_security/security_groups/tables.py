@@ -91,8 +91,8 @@ class RulesTable(tables.DataTable):
 
     def get_object_display(self, datum):
         #FIXME (PaulM) Do something prettier here
-        return ', '.join([':'.join((k,str(v))) for 
-                         k,v in datum._apidict.iteritems()])
+        return ', '.join([':'.join((k, str(v))) for
+                         k, v in datum._apidict.iteritems()])
 
     class Meta:
         name = "rules"

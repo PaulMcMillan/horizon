@@ -38,8 +38,10 @@ SG_EDIT_RULE_URL = \
         reverse('horizon:nova:access_and_security:security_groups:edit_rules',
                            args=[SECGROUP_ID])
 
+
 def strip_absolute_base(uri):
     return uri.split(ABSOLUTE_BASE, 1)[-1]
+
 
 class SecurityGroupsViewTests(test.BaseViewTests):
     def setUp(self):

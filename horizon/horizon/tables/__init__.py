@@ -15,7 +15,7 @@
 #    under the License.
 
 # Convenience imports for public API components.
-from .actions import (Action, BatchAction, DeleteAction, 
+from .actions import (Action, BatchAction, DeleteAction,
                       LinkAction, FilterAction)
 from .base import DataTable, Column
 from .views import DataTableView, MultiTableView

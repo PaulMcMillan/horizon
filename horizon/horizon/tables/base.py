@@ -371,6 +371,7 @@ class Cell(object):
             union.add(self.get_status_class(self.status))
         return " ".join(union)
 
+
 class DataTableOptions(object):
     """ Contains options for :class:`.DataTable` objects.
 

@@ -22,6 +22,7 @@ from django.forms.util import flatatt
 from django.contrib import messages
 from django.core import urlresolvers
 
+
 LOG = logging.getLogger(__name__)
 
 
@@ -101,7 +102,6 @@ class Action(BaseAction):
 
         Handler for multi-object actions.
 
-
     .. method:: handle(self, data_table, request, object_ids)
 
         If a single function can work for both single-object and
@@ -152,8 +152,9 @@ class Action(BaseAction):
             self.handles_multiple = True
 
         if not has_handler and (not has_single or has_multiple):
-            raise NotImplementedError('You must define either a "handle" method'
-                                      ' or a "single" or "multiple" method.')
+            raise NotImplementedError('You must define either a "handle" '
+                                      'method or a "single" or "multiple"'
+                                      ' method.')
 
         if not has_single:
             def single(self, data_table, request, object_id):
@@ -320,7 +321,7 @@ class BatchAction(Action):
        raised are caught and logged.
 
     .. method:: allowed(self, request, datum)
-    
+
        Optional method that returns a boolean indicating whether the
        action is allowed for the given input.
     """
@@ -402,7 +403,7 @@ class BatchAction(Action):
             success_message_level = messages.info
         if action_success:
             success_message_level(request, _('%s: %s') % (
-                    self._conjugate(action_success, True), 
+                    self._conjugate(action_success, True),
                     ", ".join(action_success)))
 
         return shortcuts.redirect(self.get_completion_url(request))
