@@ -307,10 +307,10 @@ class BatchAction(Action):
 
        Required method that deletes the specified object.
     """
-   #action_present = _("Delete")
-   #action_past = _("Deleted")
+    #action_present = None
+    #action_past = None
     data_type_singular = _("Object")
-   #data_type_plural = _("Objects")
+    #data_type_plural = _("Objects")
     completion_url = None
 
     def _conjugate(self, items=None, past=False):
@@ -331,7 +331,7 @@ class BatchAction(Action):
         self.data_type_plural = getattr(self, 'data_type_plural',
                                         self.data_type_singular + 's')
         self.verbose_name = getattr(self, 'verbose_name',
-                                    self.name.title())
+                                    self._conjugate())
         self.verbose_name_plural = getattr(self, 'verbose_name_plural',
                                            self._conjugate('plural'))
         super(BatchAction, self).__init__()
@@ -391,4 +391,3 @@ class DeleteAction(BatchAction):
 
     def delete(self, request, obj_id):
         raise NotImplementedError("DeleteAction must define a delete method.")
-

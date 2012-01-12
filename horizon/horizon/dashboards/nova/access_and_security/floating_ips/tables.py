@@ -50,7 +50,7 @@ class AllocateIP(tables.Action):
         return shortcuts.redirect('horizon:nova:access_and_security:index')
 
 
-class ReleaseIP(tables.Action):
+class ReleaseIPs(tables.Action):
     name = "release"
     verbose_name = _("Release IP")
     classes = ('danger',)
@@ -73,6 +73,16 @@ class ReleaseIP(tables.Action):
                             % ", ".join([ip.ip for ip in released]))
         return shortcuts.redirect('horizon:nova:access_and_security:index')
 
+
+class ReleaseIPs(tables.BatchAction):
+    name = "release"
+    action_present = _("Release")
+    action_past = _("Released")
+    data_type_singular = _("IP")
+    data_type_plural = _("IPs")
+
+    def action(self, request, obj_id):
+        api.tenant_floating_ip_release(request, obj_id)
 
 class AssociateIP(tables.LinkAction):
     name = "associate"
@@ -116,8 +126,14 @@ class FloatingIPsTable(tables.DataTable):
                              verbose_name=_("Instance"),
                              empty_value="-")
 
+    def sanitize_id(self, obj_id):
+        return int(obj_id)
+
+    def get_object_display(self, datum):
+        return datum.ip
+
     class Meta:
         name = "floating_ips"
         verbose_name = _("Floating IPs")
-        table_actions = (AllocateIP, ReleaseIP)
-        row_actions = (AssociateIP, DisassociateIP, ReleaseIP)
+        table_actions = (AllocateIP, ReleaseIPs)
+        row_actions = (AssociateIP, DisassociateIP, ReleaseIPs)
