@@ -21,6 +21,7 @@ from django import shortcuts
 from django.forms.util import flatatt
 from django.contrib import messages
 from django.core import urlresolvers
+from django.utils.translation import string_concat
 
 
 LOG = logging.getLogger(__name__)
@@ -288,7 +289,7 @@ class BatchAction(Action):
 
     .. attribute:: action_present
 
-       The display form of the name. Should be an action verb,
+       The display form of the name. Should be a transitive verb,
        capitalized and translated. ("Delete", "Rotate", etc.)
 
     .. attribute:: action_past
@@ -344,7 +345,7 @@ class BatchAction(Action):
             data_type = self.data_type_singular
         else:
             data_type = self.data_type_plural
-        return ' '.join((action, data_type))
+        return string_concat(action, ' ', data_type)
 
     def __init__(self):
         self.data_type_plural = getattr(self, 'data_type_plural',
