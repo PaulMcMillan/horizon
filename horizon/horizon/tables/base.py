@@ -753,8 +753,8 @@ class DataTable(object):
         return None
 
     def sanitize_id(self, obj_id):
-        """ Override to modify an incoming obj_id to match data types
-        or change format
+        """ Override to modify an incoming obj_id to match existing
+        API data types or modify the format.
         """
         return obj_id
 

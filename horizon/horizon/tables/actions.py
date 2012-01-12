@@ -279,7 +279,7 @@ class FilterAction(BaseAction):
 
 class BatchAction(Action):
     """ A table action which takes batch action on one or more
-        objects. This action must not require user input on a
+        objects. This action should not require user input on a
         per-object basis.
 
     .. attribute:: name
@@ -288,12 +288,12 @@ class BatchAction(Action):
 
     .. attribute:: action_present
 
-       The display form of the name. Should be capitalized and
-       translated. ("Delete", "Disable", etc.)
+       The display form of the name. Should be an action verb,
+       capitalized and translated. ("Delete", "Rotate", etc.)
 
     .. attribute:: action_past
 
-       The past tense of action_present. ("Dleted", "Disabled", etc.)
+       The past tense of action_present. ("Deleted", "Rotated", etc.)
 
     .. attribute:: data_type_singular
 
@@ -302,8 +302,9 @@ class BatchAction(Action):
 
     .. attribute:: data_type_plural
 
-       Optional plural word for the type of data being
-       acted on. Defaults to appending 's'.
+       Optional plural word for the type of data being acted
+       on. Defaults to appending 's'. Relying on the default is bad
+       for translations and should not be done.
 
     .. attribute:: success_url
 
@@ -325,9 +326,9 @@ class BatchAction(Action):
        Optional method that returns a boolean indicating whether the
        action is allowed for the given input.
     """
-    #action_present = None
-    #action_past = None
-    data_type_singular = _("Object")
+    #action_present = _("Defenestrate")
+    #action_past = _("Defenestrated")
+    #data_type_singular = _("Object")
     #data_type_plural = _("Objects")
     completion_url = None
 
@@ -389,7 +390,7 @@ class BatchAction(Action):
                 LOG.exception("Unable to %s: %s" %
                               (self._conjugate(), e))
 
-        #Begin with success class, downgrade to info if problems
+        #Begin with success message class, downgrade to info if problems
         success_message_level = messages.success
         if action_not_allowed:
             messages.error(request, _('You do not have permission to %s: %s') %
