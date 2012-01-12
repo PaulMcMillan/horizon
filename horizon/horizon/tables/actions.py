@@ -278,14 +278,35 @@ class FilterAction(BaseAction):
 
 class DeleteAction(Action):
     """ A table action which deletes one or more objects.
+
+    .. attribute:: data_type_display
+
+       A name for the type of data which is being deleted.
+
+    .. attribute:: data_type_display_plural
+
+       Optional plural word for the type of data being
+       displayed. Defaults to appending 's'.
+
+    .. attribute:: success_url
+
+       Optional location to redirect after completion of the delete
+       action. Defaults to the current page.
+
+    .. method:: get_success_url(self, request=None)
+
+       Optional method that returns the success url.
+
+    .. method:: delete(self, request, obj_id)
+
+       Required method that deletes the specified object.
     """
     data_type_display = _("Object")
     success_url = None
 
     name = "delete"
-    default_verbose_base = _("Delete")
+    verbose_name_base = _("Delete")
     classes = ('danger',)
-
 
     def __init__(self):
         self.data_type_display_plural = getattr(
@@ -295,19 +316,22 @@ class DeleteAction(Action):
         #results in something like "Delete Object"
         self.verbose_name = getattr(
             self, 'verbose_name',
-            ' '.join((self.default_verbose_base, 
+            ' '.join((self.verbose_name_base,
                       self.data_type_display)))
 
         self.verbose_name_plural = getattr(
             self, 'verbose_name_plural',
-            ' '.join((self.default_verbose_base, 
+            ' '.join((self.verbose_name_base,
                       self.data_type_display_plural)))
 
         super(DeleteAction, self).__init__()
 
     def delete(self, request, obj_id):
-        raise NotImplementedError('delete_obj() not defined for DeleteAction: '
-                                  '%s' % data_type_display)
+        """ Override to delete the specified object. Return value is
+        discarded, errors raised are caught and logged.
+        """
+        raise NotImplementedError('delete() must be defined for '
+                                  'DeleteAction: %s' % data_type_display)
 
     def get_success_url(self, request=None):
         if self.success_url:
@@ -324,7 +348,7 @@ class DeleteAction(Action):
             try:
                 self.delete(request, obj_id)
                 deleted.append(obj_display)
-                LOG.info('Deleted %s: "%s"' % 
+                LOG.info('Deleted %s: "%s"' %
                          (data_type_display, obj_display))
             except Exception, e:
                 LOG.exception("Error deleting %s: %s" %
