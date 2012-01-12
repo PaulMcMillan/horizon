@@ -75,6 +75,7 @@ class DeleteRule(tables.DeleteAction):
     def delete(self, request, obj_id):
         api.security_group_rule_delete(request, obj_id)
 
+
 def get_cidr(rule):
     return rule.ip_range['cidr']
 
@@ -89,8 +90,9 @@ class RulesTable(tables.DataTable):
         return int(obj_id)
 
     def get_object_display(self, datum):
-        #FIXME (PaulM) Do something prettier here eventually
-        return ' '.join([':'.join((k,v)) for k,v in datum._apidict.iteritems()])
+        #FIXME (PaulM) Do something prettier here
+        return ', '.join([':'.join((k,str(v))) for 
+                         k,v in datum._apidict.iteritems()])
 
     class Meta:
         name = "rules"

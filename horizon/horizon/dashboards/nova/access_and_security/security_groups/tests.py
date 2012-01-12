@@ -29,7 +29,7 @@ from horizon import api
 from horizon import test
 from .tables import SecurityGroupsTable, RulesTable
 
-
+ABSOLUTE_BASE = "http://testserver"
 SECGROUP_ID = '2'
 INDEX_URL = reverse('horizon:nova:access_and_security:index')
 SG_CREATE_URL = \
@@ -38,6 +38,8 @@ SG_EDIT_RULE_URL = \
         reverse('horizon:nova:access_and_security:security_groups:edit_rules',
                            args=[SECGROUP_ID])
 
+def strip_absolute_base(uri):
+    return uri.split(ABSOLUTE_BASE, 1)[-1]
 
 class SecurityGroupsViewTests(test.BaseViewTests):
     def setUp(self):
@@ -219,7 +221,8 @@ class SecurityGroupsViewTests(test.BaseViewTests):
         table = RulesTable(req, self.rules)
         handled = table.maybe_handle()
 
-        self.assertEqual(handled['location'], SG_EDIT_RULE_URL)
+        self.assertEqual(strip_absolute_base(handled['location']),
+                         SG_EDIT_RULE_URL)
 
     def test_edit_rules_delete_rule_exception(self):
         RULE_ID = '1'
@@ -238,7 +241,8 @@ class SecurityGroupsViewTests(test.BaseViewTests):
         table = RulesTable(req, self.rules)
         handled = table.maybe_handle()
 
-        self.assertEqual(handled['location'], SG_EDIT_RULE_URL)
+        self.assertEqual(strip_absolute_base(handled['location']),
+                         SG_EDIT_RULE_URL)
 
     def test_delete_group(self):
         self.mox.StubOutWithMock(api, 'security_group_delete')
@@ -251,7 +255,8 @@ class SecurityGroupsViewTests(test.BaseViewTests):
         table = SecurityGroupsTable(req, self.security_groups)
         handled = table.maybe_handle()
 
-        self.assertEqual(handled['location'], INDEX_URL)
+        self.assertEqual(strip_absolute_base(handled['location']),
+                         INDEX_URL)
 
     def test_delete_group_exception(self):
         self.mox.StubOutWithMock(api, 'security_group_delete')
@@ -267,4 +272,5 @@ class SecurityGroupsViewTests(test.BaseViewTests):
         table = SecurityGroupsTable(req, self.security_groups)
         handled = table.maybe_handle()
 
-        self.assertEqual(handled['location'], INDEX_URL)
+        self.assertEqual(strip_absolute_base(handled['location']),
+                         INDEX_URL)
