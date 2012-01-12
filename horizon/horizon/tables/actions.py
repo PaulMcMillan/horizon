@@ -276,8 +276,14 @@ class FilterAction(BaseAction):
                                   "by %s." % self.__class__)
 
 
-class DeleteAction(Action):
-    """ A table action which deletes one or more objects.
+class BatchAction(Action):
+    """ A table action which takes batch action on one or more
+        objects. This action must not require user input on a
+        per-object basis.
+
+    .. attribute:: name
+
+       A verb for this action (Delete, Disable, etc.)
 
     .. attribute:: data_type_display
 
@@ -297,70 +303,92 @@ class DeleteAction(Action):
 
        Optional method that returns the success url.
 
-    .. method:: delete(self, request, obj_id)
+    .. method:: delete(self, request, datum_id)
 
        Required method that deletes the specified object.
     """
-    data_type_display = _("Object")
-    success_url = None
+   #action_present = _("Delete")
+   #action_past = _("Deleted")
+    data_type_singular = _("Object")
+   #data_type_plural = _("Objects")
+    completion_url = None
 
-    name = "delete"
-    verbose_name_base = _("Delete")
-    classes = ('danger',)
+    def _conjugate(self, items=None, past=False):
+        """Builds combinations like 'Delete Object' and 'Deleted
+        Objects' based on the number of items and `past` flag.
+        """
+        if past:
+            action = self.action_past
+        else:
+            action = self.action_present
+        if items is None or len(items) == 1:
+            data_type = self.data_type_singular
+        else:
+            data_type = self.data_type_plural
+        return ' '.join((action, data_type))
 
     def __init__(self):
-        self.data_type_display_plural = getattr(
-            self, 'data_type_display_plural',
-            self.data_type_display + 's')
+        self.data_type_plural = getattr(self, 'data_type_plural',
+                                        self.data_type_singular + 's')
+        self.verbose_name = getattr(self, 'verbose_name',
+                                    self.name.title())
+        self.verbose_name_plural = getattr(self, 'verbose_name_plural',
+                                           self._conjugate('plural'))
+        super(BatchAction, self).__init__()
 
-        #results in something like "Delete Object"
-        self.verbose_name = getattr(
-            self, 'verbose_name',
-            ' '.join((self.verbose_name_base,
-                      self.data_type_display)))
-
-        self.verbose_name_plural = getattr(
-            self, 'verbose_name_plural',
-            ' '.join((self.verbose_name_base,
-                      self.data_type_display_plural)))
-
-        super(DeleteAction, self).__init__()
-
-    def delete(self, request, obj_id):
-        """ Override to delete the specified object. Return value is
-        discarded, errors raised are caught and logged.
+    def action(self, request, datum_id):
+        """ Override to take action on the specified datum. Return
+        value is discarded, errors raised are caught and logged.
         """
-        raise NotImplementedError('delete() must be defined for '
-                                  'DeleteAction: %s' % data_type_display)
+        raise NotImplementedError('action() must be defined for '
+                                  'BatchAction: %s' % self.data_type_singular)
 
-    def get_success_url(self, request=None):
-        if self.success_url:
-            return self.success_url
+    def get_completion_url(self, request=None):
+        if self.completion_url:
+            return self.completion_url
         return request.build_absolute_uri()
 
-    def handle(self, table, request, object_ids):
-        data_type_display = self.data_type_display
+    def handle(self, table, request, obj_ids):
         tenant_id = request.user.tenant_id
-        deleted = []
-        for obj_id in object_ids:
-            obj = table.get_object_by_id(obj_id)
-            obj_display = table.get_object_display(obj)
+        action_success = []
+        action_failure = []
+        for datum_id in obj_ids:
+            datum = table.get_object_by_id(datum_id)
+            datum_display = table.get_object_display(datum)
             try:
-                self.delete(request, obj_id)
-                deleted.append(obj_display)
-                LOG.info('Deleted %s: "%s"' %
-                         (data_type_display, obj_display))
+                self.action(request, datum_id)
+                action_success.append(datum_display)
+                LOG.info('%s: "%s"' %
+                         (self._conjugate(past=True), datum_display))
             except Exception, e:
-                LOG.exception("Error deleting %s: %s" %
-                              (data_type_display, e))
-                messages.error(request, _('Unable to delete %s: %s') %
-                                         (data_type_display, obj_display))
-        if deleted:
-            if len(deleted) > 1:
-                data_type_pluralized = self.data_type_display_plural
-            else:
-                data_type_pluralized = data_type_display
-            messages.success(request,
-                             _('Deleted %s: %s') %
-                             (data_type_pluralized, ", ".join(deleted)))
-        return shortcuts.redirect(self.get_success_url(request))
+                action_failure.append(datum_display)
+                LOG.exception("Unable to %s: %s" %
+                              (self._conjugate(), e))
+
+        success_message_level = messages.success
+        if action_failure:
+            messages.error(request, 'Unable to %s: %s' % (
+                    self._conjugate(action_failure),
+                    ", ".join(action_failure)))
+            success_message_level = messages.info
+
+        if action_success:
+            success_message_level(request, '%s: %s' % (
+                    self._conjugate(action_success, True), 
+                    ", ".join(action_success)))
+
+        return shortcuts.redirect(self.get_completion_url(request))
+
+
+class DeleteAction(BatchAction):
+    name = "delete"
+    action_present = _("Delete")
+    action_past = _("Deleted")
+    classes = ('danger',)
+
+    def action(self, request, obj_id):
+        return self.delete(request, obj_id)
+
+    def delete(self, request, obj_id):
+        raise NotImplementedError("DeleteAction must define a delete method.")
+

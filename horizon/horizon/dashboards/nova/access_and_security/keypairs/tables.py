@@ -54,7 +54,8 @@ class DeleteKeyPairs(tables.Action):
 
 
 class DeleteKeyPairs(tables.DeleteAction):
-    data_type_display = _("Keypair")
+    data_type_singular = _("Keypair")
+    data_type_plural = _("Keypairs")
 
     def delete(self, request, obj_id):
         api.nova.keypair_delete(request, obj_id)
