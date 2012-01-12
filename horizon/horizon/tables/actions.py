@@ -318,6 +318,11 @@ class BatchAction(Action):
        Required method that accepts the specified object information
        and performs the action. Return values are discarded, errors
        raised are caught and logged.
+
+    .. method:: allowed(self, request, datum)
+    
+       Optional method that returns a boolean indicating whether the
+       action is allowed for the given input.
     """
     #action_present = None
     #action_past = None
