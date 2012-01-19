@@ -36,7 +36,7 @@ from horizon import forms
 from .tables import NetworksTable
 
 from horizon.dashboards.nova.networks.forms import (CreateNetwork,
-        DeleteNetwork, RenameNetwork, AttachPort, CreatePort, DeletePort,
+         RenameNetwork, AttachPort, CreatePort, DeletePort,
         DetachPort, TogglePort)
 
 
@@ -77,6 +77,21 @@ class IndexView(tables.DataTableView):
 class CreateView(forms.ModalFormView):
     form_class = CreateNetwork
     template_name = 'nova/networks/create.html'
+
+class RenameView(forms.ModalFormView):
+    form_class = RenameNetwork
+    template_name = 'nova/networks/rename.html'
+    context_object_name = 'network'
+
+    def get_object(self, *args, **kwargs):
+        network_id = kwargs['network_id']
+        try:
+            return api.network_get(self.request, network_id)
+        except Exception as e:
+            LOG.exception('Error fetching network with id "%s"' % network_id)
+            messages.error(self.request, _('Unable to update network: %s')
+                                      % e.message)
+            raise http.Http404("Network with ID %s not found." % network_id)
 
 
 def index(request):

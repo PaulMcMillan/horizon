@@ -55,27 +55,6 @@ class CreateNetwork(forms.SelfHandlingForm):
             return shortcuts.redirect('horizon:nova:networks:index')
 
 
-class DeleteNetwork(forms.SelfHandlingForm):
-    network = forms.CharField(widget=forms.HiddenInput())
-
-    def handle(self, request, data):
-        try:
-            LOG.info('Deleting network %s ' % data['network'])
-            api.quantum_delete_network(request, data['network'])
-        except Exception, e:
-            if not hasattr(e, 'message'):
-                e.message = str(e)
-            messages.error(request,
-                    _('Unable to delete network %(network)s: %(msg)s') %
-                    {"network": data['network'], "msg": e.message})
-        else:
-            msg = _('Network %s has been deleted.') % data['network']
-            LOG.info(msg)
-            messages.success(request, msg)
-
-        return shortcuts.redirect(request.build_absolute_uri())
-
-
 class RenameNetwork(forms.SelfHandlingForm):
     network = forms.CharField(widget=forms.HiddenInput())
     new_name = forms.CharField(required=True)
