@@ -20,9 +20,11 @@
 
 from django.conf.urls.defaults import patterns, url
 
+from .views import IndexView, CreateView
+
 urlpatterns = patterns('horizon.dashboards.nova.networks.views',
-    url(r'^$', 'index', name='index'),
-    url(r'^create/$', 'create', name='create'),
+    url(r'^$', IndexView.as_view(), name='index'),
+    url(r'^create/$', CreateView.as_view(), name='create'),
     url(r'^(?P<network_id>[^/]+)/detail/$', 'detail', name='detail'),
     url(r'^(?P<network_id>[^/]+)/rename/$', 'rename', name='rename'),
     url(r'^(?P<network_id>[^/]+)/ports/create/$', 'port_create',

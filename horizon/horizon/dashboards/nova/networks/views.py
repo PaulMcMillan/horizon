@@ -31,6 +31,10 @@ from django.contrib import messages
 from django.utils.translation import ugettext as _
 
 from horizon import api
+from horizon import tables
+from horizon import forms
+from .tables import NetworksTable
+
 from horizon.dashboards.nova.networks.forms import (CreateNetwork,
         DeleteNetwork, RenameNetwork, AttachPort, CreatePort, DeletePort,
         DetachPort, TogglePort)
@@ -39,12 +43,47 @@ from horizon.dashboards.nova.networks.forms import (CreateNetwork,
 LOG = logging.getLogger(__name__)
 
 
+class IndexView(tables.DataTableView):
+    table_class = NetworksTable
+    template_name = 'nova/networks/index.html'
+    
+    def get_data(self):
+        tenant_id = self.request.user.tenant_id
+        networks = []
+
+        try:
+            networks_list = api.quantum_list_networks(self.request)
+            details = []
+            for network in networks_list['networks']:
+                net_stats = _calc_network_stats(self.request, network['id'])
+                # Get network details like name and id
+                details = api.quantum_network_details(self.request, network['id'])
+                networks.append({
+                        'name': details['network']['name'],
+                        'id': network['id'],
+                        'total': net_stats['total'],
+                        'available': net_stats['available'],
+                        'used': net_stats['used'],
+                        'tenant': tenant_id})
+        except Exception, e:
+            LOG.exception("Unable to get network list.")
+            if not hasattr(e, 'message'):
+                e.message = str(e)
+            messages.error(request,
+                           _('Unable to get network list: %s') % e.message)
+        return networks
+
+
+class CreateView(forms.ModalFormView):
+    form_class = CreateNetwork
+    template_name = 'nova/networks/create.html'
+
+
 def index(request):
     tenant_id = request.user.tenant_id
     delete_form, delete_handled = DeleteNetwork.maybe_handle(request)
 
     networks = []
-    instances = []
 
     try:
         networks_list = api.quantum_list_networks(request)
