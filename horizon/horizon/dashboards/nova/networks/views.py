@@ -25,6 +25,7 @@ Views for managing Quantum networks.
 import logging
 import warnings
 
+from django import http
 from django import shortcuts
 from django import template
 from django.contrib import messages
@@ -33,7 +34,7 @@ from django.utils.translation import ugettext as _
 from horizon import api
 from horizon import tables
 from horizon import forms
-from .tables import NetworksTable
+from .tables import NetworksTable, NetworkDetailsTable
 
 from horizon.dashboards.nova.networks.forms import (CreateNetwork,
          RenameNetwork, AttachPort, CreatePort, DeletePort,
@@ -86,56 +87,27 @@ class RenameView(forms.ModalFormView):
     def get_object(self, *args, **kwargs):
         network_id = kwargs['network_id']
         try:
-            return api.network_get(self.request, network_id)
+            return api.quantum_network_details(self.request, 
+                                               network_id)['network']
         except Exception as e:
             LOG.exception('Error fetching network with id "%s"' % network_id)
             messages.error(self.request, _('Unable to update network: %s')
                                       % e.message)
             raise http.Http404("Network with ID %s not found." % network_id)
 
-
-def index(request):
-    tenant_id = request.user.tenant_id
-    delete_form, delete_handled = DeleteNetwork.maybe_handle(request)
-
-    networks = []
-
-    try:
-        networks_list = api.quantum_list_networks(request)
-        details = []
-        for network in networks_list['networks']:
-            net_stats = _calc_network_stats(request, network['id'])
-            # Get network details like name and id
-            details = api.quantum_network_details(request, network['id'])
-            networks.append({
-                'name': details['network']['name'],
-                'id': network['id'],
-                'total': net_stats['total'],
-                'available': net_stats['available'],
-                'used': net_stats['used'],
-                'tenant': tenant_id})
-
-    except Exception, e:
-        LOG.exception("Unable to get network list.")
-        if not hasattr(e, 'message'):
-            e.message = str(e)
-        messages.error(request,
-                       _('Unable to get network list: %s') % e.message)
-
-    return shortcuts.render(request,
-                            'nova/networks/index.html', {
-                                'networks': networks,
-                                'delete_form': delete_form})
+    def get_initial(self):
+        return {'network': self.object['id']}
 
 
-def create(request):
-    network_form, handled = CreateNetwork.maybe_handle(request)
-    if handled:
-        return shortcuts.redirect('horizon:nova:networks:index')
+class DetailView(tables.DataTableView):
+    table_class = NetworkDetailsTable
+    template_name = 'nova/networks/index.html'
 
-    return shortcuts.render(request,
-                            'nova/networks/create.html',
-                            {'network_form': network_form})
+    def get_data(self):
+        network_id = self.kwargs['network_id']
+        import pdb;pdb.set_trace()
+
+        return api.quantum_network_details(self.request, network_id)['network']
 
 
 def detail(request, network_id):
@@ -170,22 +142,6 @@ def detail(request, network_id):
                              'detach_port_form': detach_port_form,
                              'toggle_port_form': toggle_port_form})
 
-
-def rename(request, network_id):
-    network_details = api.quantum_network_details(request, network_id)
-    network = network_details['network']
-
-    rename_form, handled = RenameNetwork.maybe_handle(request, initial={
-                                                'network': network['id'],
-                                                'new_name': network['name']})
-
-    if handled:
-        return shortcuts.redirect('horizon:nova:networks:index')
-
-    return shortcuts.render(request,
-                            'nova/networks/rename.html', {
-                                'network': network,
-                                'rename_form': rename_form})
 
 
 def _get_port_states(request, network_id):

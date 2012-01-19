@@ -77,7 +77,7 @@ class RenameNetwork(forms.SelfHandlingForm):
             LOG.info(msg)
             messages.success(request, msg)
 
-        return shortcuts.redirect(request.build_absolute_uri())
+        return shortcuts.redirect('horizon:nova:networks:index')
 
 
 class CreatePort(forms.SelfHandlingForm):
