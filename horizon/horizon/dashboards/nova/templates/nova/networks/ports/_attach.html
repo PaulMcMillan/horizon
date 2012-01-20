@@ -2,7 +2,7 @@
 {% load i18n %}
 
 {% block form_id %}attach_port_form{% endblock %}
-{% block form_action %}{% url horizon:nova:networks:port_attach network port %}{% endblock %}
+{% block form_action %}{% url horizon:nova:networks:port_attach params.network_id port %}{% endblock %}
 
 {% block modal-header %}Attach Port{% endblock %}
 

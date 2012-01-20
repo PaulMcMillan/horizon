@@ -102,30 +102,8 @@ class CreatePort(forms.SelfHandlingForm):
             LOG.info(msg)
             messages.success(request, msg)
 
-        return shortcuts.redirect(request.build_absolute_uri())
-
-
-class DeletePort(forms.SelfHandlingForm):
-    network = forms.CharField(widget=forms.HiddenInput())
-    port = forms.CharField(widget=forms.HiddenInput())
-
-    def handle(self, request, data):
-        try:
-            LOG.info('Deleting %s ports on network %s' %
-                     (data['port'], data['network']))
-            api.quantum_delete_port(request, data['network'], data['port'])
-        except Exception, e:
-            if not hasattr(e, 'message'):
-                e.message = str(e)
-            messages.error(request,
-                           _('Unable to delete port %(port)s: %(msg)s') %
-                           {"port": data['port'], "msg": e.message})
-        else:
-            msg = _('Port %(port)s deleted from network %(network)s.') % {
-                  "port": data['port'], "network": data['network']}
-            LOG.info(msg)
-            messages.success(request, msg)
-        return shortcuts.redirect(request.build_absolute_uri())
+        return shortcuts.redirect('horizon:nova:networks:detail', 
+                                  network_id=data['network'])
 
 
 class AttachPort(forms.SelfHandlingForm):
