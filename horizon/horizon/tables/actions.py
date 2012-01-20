@@ -34,35 +34,8 @@ class BaseAction(object):
     table = None
     handles_multiple = False
     attrs = {}
-#    _name = None
+    name = None
     requires_input = False
-
-#    @classmethod
-#    def cls_name(self):
-        
-
-#    name = property(lambda self: self.__class__.__name__)
-
-#    @property
-#    def name(self):
-#        if not self._name:
-#            return self.__class__.__name__
-#        return self._name
-
-#    @name.setter
-#    def name(self, value):
-#        self.name = value
-#        self._name = value
-
-#    @name.deleter
-#    def name(self):
-#        del self._name
-
-#    def __new__(cls, *args, **kwargs):
-#        new_cls = super(BaseAction, cls).__new__(cls, *args, **kwargs)
-#        if not new_cls.name:
-#            new_cls.name = cls.__name__
-#        return new_cls
 
     def allowed(self, request, datum):
         """ Determine whether this action is allowed for the current request.
@@ -147,7 +120,7 @@ class Action(BaseAction):
                  single_func=None, multiple_func=None, handle_func=None,
                  handles_multiple=False, attrs=None, requires_input=True):
         super(Action, self).__init__()
-        self.name = unicode(getattr(self, "name", self.__class__.__name__))
+        self.name = unicode(getattr(self, 'name', self.__class__.__name__))
         verbose_name = verbose_name or self.name.title()
         self.verbose_name = unicode(getattr(self,
                                             "verbose_name",
@@ -161,7 +134,6 @@ class Action(BaseAction):
                                         handles_multiple)
         self.requires_input = getattr(self,
                                       "requires_input",
-
                                       requires_input)
         if attrs:
             self.attrs.update(attrs)
@@ -224,7 +196,9 @@ class LinkAction(BaseAction):
 
     def __init__(self, name=None, verbose_name=None, url=None, attrs=None):
         super(LinkAction, self).__init__()
-        self.name = unicode(name or getattr(self, "name", self.__class__.__name__))
+        self.name = name or unicode(getattr(self,
+                                            "name",
+                                            self.__class__.__name__))
         verbose_name = verbose_name or self.name.title()
         self.verbose_name = unicode(getattr(self,
                                             "verbose_name",
@@ -285,7 +259,7 @@ class FilterAction(BaseAction):
 
     def __init__(self, name=None, verbose_name=None, param_name=None):
         super(FilterAction, self).__init__()
-        self.name = unicode(name or getattr(self, 'name', self.__class__.__name__))
+        self.name = name or self.name
         self.verbose_name = unicode(verbose_name) or self.name
         self.param_name = param_name or 'q'
 
