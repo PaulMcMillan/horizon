@@ -1,6 +1,7 @@
 import logging
 
 from django import shortcuts
+from django.core.urlresolvers import reverse
 from django.contrib import messages
 from django.utils.translation import ugettext_lazy as _
 
@@ -31,7 +32,7 @@ class DeleteNetworkAction(tables.DeleteAction):
         api.quantum_delete_network(request, obj_id)
 
 class NetworksTable(tables.DataTable):
-    id = tables.Column('id', verbose_name=_('Id'))
+    id = tables.Column('id', verbose_name=_('Network Id'))
     name = tables.Column('name', verbose_name=_('Name'))
     used = tables.Column('used', verbose_name=_('Used'))
     available = tables.Column('available', verbose_name=_('Available'))
@@ -51,21 +52,44 @@ class NetworksTable(tables.DataTable):
         table_actions = (CreateNetworkLink, DeleteNetworkAction,)
 
 
+class CreatePortLink(tables.LinkAction):
+#    name = "create_port"
+    verbose_name = _("Create Port")
+    url = "horizon:nova:networks:port_create"
+    attrs = {"class": "ajax-modal btn small"}
+
+    def get_link_url(self, datum=None):
+        network_id = self.table.kwargs['network_id']
+        return reverse(self.url, args=(network_id,))
+
+
 class DeletePortAction(tables.DeleteAction):
     data_type_singular = _("Port")
     data_type_plural = _("Ports")
 
     def delete(self, request, obj_id):
-        import pdb;pdb.set_trace()
-        api.quantum_delete_port(request, data['network'], data['port'])
+        api.quantum_delete_port(request, 
+                                self.table.kwargs['network_id'],
+                                obj_id)
+
+
+class AttachPortAction(tables.LinkAction):
+#    name = "attach_port"
+    verbose_name = _("Attach Port")
+    url = "horizon:nova:networks:port_attach"
+    attrs = {"class": "ajax-modal"}
+
+    def get_link_url(self, datum=None):
+        network_id = self.table.kwargs['network_id']
+        return reverse(self.url, args=(network_id,datum['id']))
+
 
 class NetworkDetailsTable(tables.DataTable):
-    id = tables.Column('id', verbose_name=_('Id'))
+    id = tables.Column('id', verbose_name=_('Port Id'))
     state = tables.Column('state', verbose_name=_('State'))
     attachment = tables.Column('attachment', verbose_name=_('Attachment'))
     
     def get_object_id(self, datum):
-        import pdb;pdb.set_trace()
         return datum['id']
 
     def get_object_display(self, obj):
@@ -74,5 +98,5 @@ class NetworkDetailsTable(tables.DataTable):
     class Meta:
         name = "network_details"
         verbose_name = _("Network Port Details")
-        row_actions = (DeletePortAction,)
-        table_actions = (DeletePortAction,)
+        row_actions = (DeletePortAction, AttachPortAction,)
+        table_actions = (CreatePortLink, DeletePortAction,)

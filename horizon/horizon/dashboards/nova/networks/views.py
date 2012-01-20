@@ -37,7 +37,7 @@ from horizon import forms
 from .tables import NetworksTable, NetworkDetailsTable
 
 from horizon.dashboards.nova.networks.forms import (CreateNetwork,
-         RenameNetwork, AttachPort, CreatePort, DeletePort,
+        RenameNetwork, AttachPort, CreatePort,
         DetachPort, TogglePort)
 
 
@@ -105,9 +105,12 @@ class DetailView(tables.DataTableView):
 
     def get_data(self):
         network_id = self.kwargs['network_id']
-        import pdb;pdb.set_trace()
-
-        return api.quantum_network_details(self.request, network_id)['network']
+        network = {}
+        network['id'] = network_id
+        network_details = api.quantum_network_details(self.request, network_id)
+        network['name'] = network_details['network']['name']
+        network['ports'] = _get_port_states(self.request, network_id)
+        return network['ports']
 
 
 def detail(request, network_id):
@@ -196,19 +199,46 @@ def _calc_network_stats(request, network_id):
 
     return {'total': total, 'used': used, 'available': available}
 
+class CreatePortView(forms.ModalFormView):
+    form_class = CreatePort
+    template_name = 'nova/networks/ports/create.html'
+    context_object_name = 'port'
 
-def port_create(request, network_id):
-    create_form, handled = CreatePort.maybe_handle(request, initial={
-                                                   "network": network_id})
+    def get_object(self, *args, **kwargs):
+        network_id = kwargs['network_id']
+        try:
+            return api.quantum_network_details(self.request, 
+                                               network_id)['network']
+        except Exception as e:
+            LOG.exception('Error fetching network with id "%s"' % network_id)
+            messages.error(self.request, _('Unable to update network: %s')
+                                      % e.message)
+            raise http.Http404("Network with ID %s not found." % network_id)
 
-    if handled:
-        return shortcuts.redirect('horizon:nova:networks:detail',
-                                  network_id=network_id)
+    def get_initial(self):
+        return {'network': self.object['id']}
 
-    return shortcuts.render(request,
-                            'nova/ports/create.html', {
-                                'network_id': network_id,
-                                'create_form': create_form})
+
+
+
+class AttachPortView(forms.ModalFormView):
+    form_class = AttachPort
+    template_name = 'nova/networks/ports/attach.html'
+    context_object_name = 'network'
+
+    def get_object(self, *args, **kwargs):
+        network_id = kwargs['network_id']
+        try:
+            return api.quantum_network_details(self.request, 
+                                               network_id)['network']
+        except Exception as e:
+            LOG.exception('Error fetching network with id "%s"' % network_id)
+            messages.error(self.request, _('Unable to update network: %s')
+                                      % e.message)
+            raise http.Http404("Network with ID %s not found." % network_id)
+
+    def get_initial(self):
+        return {'network': self.object['id']}
 
 
 def port_attach(request, network_id, port_id):

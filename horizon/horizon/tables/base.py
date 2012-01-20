@@ -552,13 +552,17 @@ class DataTableMetaclass(type):
         # to instantiate them once.
         # (list() call gives deterministic sort order, which sets don't have.)
         actions = list(set(opts.row_actions) | set(opts.table_actions))
-        actions.sort(key=attrgetter('name'))
-        actions_dict = SortedDict([(action.name, action()) \
+        try:
+            actions.sort(key=attrgetter('name'))
+        except:
+            pass
+        actions.sort(key=attrgetter('__class__'))
+        actions_dict = SortedDict([(action, action()) \
                                    for action in actions])
         attrs['base_actions'] = actions_dict
         if opts._filter_action:
             # Replace our filter action with the instantiated version
-            opts._filter_action = actions_dict[opts._filter_action.name]
+            opts._filter_action = actions_dict[opts._filter_action]
 
         # Create our new class!
         return type.__new__(mcs, name, bases, attrs)
@@ -695,7 +699,7 @@ class DataTable(object):
 
     def get_table_actions(self):
         """ Returns a list of the action instances for this table. """
-        bound_actions = [self.base_actions[action.name] for
+        bound_actions = [self.base_actions[action] for
                          action in self._meta.table_actions]
         return [action for action in bound_actions if
                 self._filter_action(action, self._meta.request)]
@@ -705,7 +709,7 @@ class DataTable(object):
         bound_actions = []
         for action in self._meta.row_actions:
             # Copy to allow modifying properties per row
-            bound_action = copy.copy(self.base_actions[action.name])
+            bound_action = copy.copy(self.base_actions[action])
             # Remove disallowed actions.
             if not self._filter_action(bound_action,
                                        self._meta.request,
