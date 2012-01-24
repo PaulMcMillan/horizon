@@ -37,8 +37,7 @@ from horizon import forms
 from .tables import NetworksTable, NetworkDetailsTable
 
 from horizon.dashboards.nova.networks.forms import (CreateNetwork,
-        RenameNetwork, AttachPort, CreatePort,
-        DetachPort, TogglePort)
+        RenameNetwork, AttachPort, CreatePort)
 
 
 LOG = logging.getLogger(__name__)
@@ -58,7 +57,8 @@ class IndexView(tables.DataTableView):
             for network in networks_list['networks']:
                 net_stats = _calc_network_stats(self.request, network['id'])
                 # Get network details like name and id
-                details = api.quantum_network_details(self.request, network['id'])
+                details = api.quantum_network_details(self.request, 
+                                                      network['id'])
                 networks.append({
                         'name': details['network']['name'],
                         'id': network['id'],
@@ -113,40 +113,6 @@ class DetailView(tables.DataTableView):
         return network['ports']
 
 
-def detail(request, network_id):
-    tenant_id = request.user.tenant_id
-    delete_port_form, delete_handled = DeletePort.maybe_handle(request,
-                                            initial={"network": network_id})
-    detach_port_form, detach_handled = DetachPort.maybe_handle(request,
-                                            initial={"network": network_id})
-    toggle_port_form, port_toggle_handled = TogglePort.maybe_handle(request,
-                                            initial={"network": network_id})
-
-    network = {}
-    network['id'] = network_id
-
-    try:
-        network_details = api.quantum_network_details(request, network_id)
-        network['name'] = network_details['network']['name']
-        network['ports'] = _get_port_states(request, network_id)
-    except Exception, e:
-        LOG.exception("Unable to get network details.")
-        if not hasattr(e, 'message'):
-            e.message = str(e)
-        messages.error(request,
-                       _('Unable to get network details: %s') % e.message)
-        return shortcuts.redirect("horizon:nova:networks:index")
-
-    return shortcuts.render(request,
-                            'nova/networks/detail.html',
-                            {'network': network,
-                             'tenant': tenant_id,
-                             'delete_port_form': delete_port_form,
-                             'detach_port_form': detach_port_form,
-                             'toggle_port_form': toggle_port_form})
-
-
-
 def _get_port_states(request, network_id):
     """
     Helper method to find port states for a network
@@ -199,6 +165,7 @@ def _calc_network_stats(request, network_id):
 
     return {'total': total, 'used': used, 'available': available}
 
+
 class CreatePortView(forms.ModalFormView):
     form_class = CreatePort
     template_name = 'nova/networks/ports/create.html'
@@ -219,8 +186,6 @@ class CreatePortView(forms.ModalFormView):
         return {'network': self.object['id']}
 
 
-
-
 class AttachPortView(forms.ModalFormView):
     form_class = AttachPort
     template_name = 'nova/networks/ports/attach.html'
@@ -239,19 +204,3 @@ class AttachPortView(forms.ModalFormView):
 
     def get_initial(self):
         return {'network': self.object['id']}
-
-
-def port_attach(request, network_id, port_id):
-    attach_form, handled = AttachPort.maybe_handle(request, initial={
-                                                   "network": network_id,
-                                                   "port": port_id})
-
-    if handled:
-        return shortcuts.redirect('horizon:nova:networks:detail',
-                                   network_id=network_id)
-
-    return shortcuts.render(request,
-                            'nova/ports/attach.html', {
-                                'network': network_id,
-                                'port': port_id,
-                                'attach_form': attach_form})

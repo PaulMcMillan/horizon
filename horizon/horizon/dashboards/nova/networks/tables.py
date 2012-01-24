@@ -18,11 +18,13 @@ class RenameNetworkLink(tables.LinkAction):
     url = "horizon:nova:networks:rename"
     attrs = {"class": "ajax-modal"}
 
+
 class CreateNetworkLink(tables.LinkAction):
     name = "create_network"
     verbose_name = _("Create New Network")
     url = "horizon:nova:networks:create"
     attrs = {"class": "ajax-modal btn small"}
+
 
 class DeleteNetworkAction(tables.DeleteAction):
     data_type_singular = _("Network")
@@ -31,8 +33,10 @@ class DeleteNetworkAction(tables.DeleteAction):
     def delete(self, request, obj_id):
         api.quantum_delete_network(request, obj_id)
 
+
 class NetworksTable(tables.DataTable):
-    id = tables.Column('id', verbose_name=_('Network Id'))
+    id = tables.Column('id', verbose_name=_('Network Id'),
+                       link="horizon:nova:networks:detail")
     name = tables.Column('name', verbose_name=_('Name'))
     used = tables.Column('used', verbose_name=_('Used'))
     available = tables.Column('available', verbose_name=_('Available'))
@@ -53,8 +57,8 @@ class NetworksTable(tables.DataTable):
 
 
 class CreatePortLink(tables.LinkAction):
-#    name = "create_port"
-    verbose_name = _("Create Port")
+    name = "create_port"
+    verbose_name = _("Create Ports")
     url = "horizon:nova:networks:port_create"
     attrs = {"class": "ajax-modal btn small"}
 
@@ -72,9 +76,22 @@ class DeletePortAction(tables.DeleteAction):
                                 self.table.kwargs['network_id'],
                                 obj_id)
 
+class DetachPortAction(tables.BatchAction):
+    name = "detach_port"
+    action_present = _("Detach")
+    action_past = _("Detached")
+    data_type_singular = _("Port")
+    data_type_plural = _("Ports")
+
+    def action(self, request, datum_id):
+        body = {'port': {'state': 'DOWN'}}
+        api.quantum_set_port_state(request,
+                                   self.table.kwargs['network_id'],
+                                   datum_id, body)
+
 
 class AttachPortAction(tables.LinkAction):
-#    name = "attach_port"
+    name = "attach_port"
     verbose_name = _("Attach Port")
     url = "horizon:nova:networks:port_attach"
     attrs = {"class": "ajax-modal"}
@@ -98,5 +115,5 @@ class NetworkDetailsTable(tables.DataTable):
     class Meta:
         name = "network_details"
         verbose_name = _("Network Port Details")
-        row_actions = (DeletePortAction, AttachPortAction,)
+        row_actions = (DeletePortAction, AttachPortAction, DetachPortAction)
         table_actions = (CreatePortLink, DeletePortAction,)
