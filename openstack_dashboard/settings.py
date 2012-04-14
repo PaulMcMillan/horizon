@@ -59,6 +59,7 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'openstack_dashboard.middleware.DashboardLogUnhandledExceptionsMiddleware',
     'horizon.middleware.HorizonMiddleware',
@@ -91,6 +92,7 @@ STATICFILES_DIRS = (
 
 INSTALLED_APPS = (
     'openstack_dashboard',
+    'django.contrib.auth',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
@@ -102,7 +104,7 @@ INSTALLED_APPS = (
 )
 
 TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'
-AUTHENTICATION_BACKENDS = ('django.contrib.auth.backends.ModelBackend',)
+AUTHENTICATION_BACKENDS = ('horizon.auth.KeystoneBackend',)
 MESSAGE_STORAGE = 'django.contrib.messages.storage.cookie.CookieStorage'
 
 SESSION_ENGINE = 'django.contrib.sessions.backends.cache'

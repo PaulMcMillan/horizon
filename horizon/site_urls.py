@@ -20,7 +20,7 @@
 
 from django.conf.urls.defaults import patterns, url, include
 
-from horizon.views.auth import LoginView
+from horizon.auth.views import LoginView
 
 
 urlpatterns = patterns('horizon.views.auth',

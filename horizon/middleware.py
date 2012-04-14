@@ -49,7 +49,9 @@ class HorizonMiddleware(object):
 
         Adds a :class:`~horizon.users.User` object to ``request.user``.
         """
-        request.__class__.user = users.LazyUser()
+        # Bypasses allows the lazy object to avoid auth.get_user()
+        if '_horizon_user' in request.session:
+            request._cached_user = request.session._horizon_user
         request.horizon = {'dashboard': None, 'panel': None}
 
     def process_exception(self, request, exception):
