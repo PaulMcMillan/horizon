@@ -25,7 +25,7 @@ from django import shortcuts
 from django.views.decorators import vary
 
 import horizon
-from horizon.views import auth as auth_views
+from horizon.auth import views as auth_views
 
 
 def qunit_tests(request):

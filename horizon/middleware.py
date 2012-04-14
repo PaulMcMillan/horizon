@@ -32,8 +32,6 @@ from django.contrib.auth import REDIRECT_FIELD_NAME
 from django.utils.encoding import iri_to_uri
 
 from horizon import exceptions
-from horizon import users
-
 
 LOG = logging.getLogger(__name__)
 
@@ -49,9 +47,9 @@ class HorizonMiddleware(object):
 
         Adds a :class:`~horizon.users.User` object to ``request.user``.
         """
-        # Bypasses allows the lazy object to avoid auth.get_user()
-        if '_horizon_user' in request.session:
-            request._cached_user = request.session._horizon_user
+        # This bypasses auth.get_user()
+        if '_keystone_user' in request.session:
+            request._cached_user = request.session._keystone_user
         request.horizon = {'dashboard': None, 'panel': None}
 
     def process_exception(self, request, exception):

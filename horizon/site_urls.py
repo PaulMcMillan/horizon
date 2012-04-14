@@ -23,7 +23,7 @@ from django.conf.urls.defaults import patterns, url, include
 from horizon.auth.views import LoginView
 
 
-urlpatterns = patterns('horizon.views.auth',
+urlpatterns = patterns('horizon.auth.views',
     url(r'home/$', 'user_home', name='user_home'),
     url(r'auth/login/$', LoginView.as_view(), name='auth_login'),
     url(r'auth/logout/$', 'logout', name='auth_logout'),
