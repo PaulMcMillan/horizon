@@ -15,18 +15,21 @@ USER_SESSION_KEY = '_auth_keystone_user'
 def _cache_user(sender, request, user, **kwargs):
     request._cached_user = user
     request.session._keystone_user = user
+    request.session.user = user
 
 # Maybe needs some more restrictions
 user_logged_in.connect(_cache_user)
 
 class KeystoneBackend(object):
-    def get_user(user_id):
+    def get_user(self, user_id):
         # Deliberately allows django.contrib.auth.AnonymousUser() to be set.
         # Middleware and signal sets this correctly when appropriate.
+        #return User()
+        import pdb;pdb.set_trace()
         pass
 
-    def _create_user(request, token):
-        return User(id=token.user['user_id'],
+    def _create_user(self, request, token):
+        return User(id=token.user['id'],
                     token=token.id,
                     user=token.user['name'],
                     tenant_id=token.tenant['id'],
@@ -112,7 +115,6 @@ class KeystoneBackend(object):
             if token is None:
                 raise exceptions.NotAuthorized(
                     _("You are not authorized for any available projects."))
-
             return self._create_user(request, token)
 
 
@@ -207,3 +209,6 @@ class User(object):
     @authorized_tenants.setter
     def authorized_tenants(self, tenant_list):
         self._authorized_tenants = tenant_list
+
+    def save(self, *args, **kwargs):
+        pass

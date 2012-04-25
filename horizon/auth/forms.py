@@ -27,7 +27,7 @@ import logging
 from django import shortcuts
 from django.conf import settings
 from django.contrib import messages
-from django.contrib.auth import REDIRECT_FIELD_NAME, authenticate, login
+from django.contrib.auth import REDIRECT_FIELD_NAME, authenticate, login as auth_login
 from django.utils.translation import ugettext as _
 from keystoneclient import exceptions as keystone_exceptions
 
@@ -38,16 +38,6 @@ from horizon import forms
 
 
 LOG = logging.getLogger(__name__)
-
-
-def _set_session_data(request, token):
-    request.session['serviceCatalog'] = token.serviceCatalog
-    request.session['tenant'] = token.tenant['name']
-    request.session['tenant_id'] = token.tenant['id']
-    request.session['token'] = token.id
-    request.session['user_name'] = token.user['name']
-    request.session['user_id'] = token.user['id']
-    request.session['roles'] = token.user['roles']
 
 
 class Login(forms.SelfHandlingForm):

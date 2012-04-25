@@ -94,6 +94,7 @@ def keystoneclient(request, username=None, password=None, tenant_id=None,
     request/response cycle don't have to be re-authenticated.
     """
     user = request.user
+    user.is_admin = lambda:True
     if admin:
         if not user.is_admin():
             raise exceptions.NotAuthorized
@@ -116,8 +117,8 @@ def keystoneclient(request, username=None, password=None, tenant_id=None,
         LOG.debug("Creating a new keystoneclient connection to %s." % auth_url)
         conn = keystone_client.Client(username=username or user.username,
                                       password=password,
-                                      tenant_id=tenant_id or user.tenant_id,
-                                      token=token_id or user.token,
+                                      tenant_id=tenant_id,# or user.tenant_id,
+                                      token=token_id,# or user.token,
                                       auth_url=auth_url,
                                       endpoint=endpoint)
         setattr(request, cache_attr, conn)
@@ -205,6 +206,7 @@ def token_create_scoped(request, tenant, token):
                                       token=token,
                                       return_raw=True)
     c.service_catalog = service_catalog.ServiceCatalog(raw_token)
+    request.user.is_admin = lambda:True
     if request.user.is_admin():
         c.management_url = c.service_catalog.url_for(service_type='identity',
                                                      endpoint_type='adminURL')

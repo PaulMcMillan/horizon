@@ -36,7 +36,6 @@ import mox
 from horizon import api
 from horizon import context_processors
 from horizon import middleware
-from horizon import users
 from horizon.tests.test_data.utils import load_test_data
 
 from .time import time
