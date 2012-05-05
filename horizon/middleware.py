@@ -51,7 +51,8 @@ class HorizonMiddleware(object):
         """
         # A quick and dirty way to log users out
         def user_logout(request):
-            del request._cached_user
+            if hasattr(request, '_cached_user'):
+                del request._cached_user
             # Use flush instead of clear, so we rotate session keys in
             # addition to clearing all the session data
             request.session.flush()
